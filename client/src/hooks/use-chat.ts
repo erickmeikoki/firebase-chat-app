@@ -71,8 +71,24 @@ export function useChat() {
       
       socket.onmessage = (event) => {
         try {
+          console.log("WebSocket message received:", event.data);
           const data = JSON.parse(event.data);
+          console.log("Parsed WebSocket data:", data);
+          
           if (data.type === 'message') {
+            console.log("Received chat message:", data);
+            
+            const newMessage = {
+              id: data.id || `temp-${Date.now()}`,
+              text: data.text,
+              userId: data.userId,
+              userName: data.username,
+              userInitials: data.userInitials,
+              timestamp: data.timestamp
+            };
+            
+            console.log("Adding new message to UI:", newMessage);
+            
             setMessages(prevMessages => {
               // Check if we already have this message
               const messageExists = prevMessages.some(m => 
@@ -80,18 +96,24 @@ export function useChat() {
                 (m.text === data.text && m.userId === data.userId && m.timestamp === data.timestamp)
               );
               
+              console.log("Message already exists?", messageExists);
+              
               if (!messageExists) {
-                return [...prevMessages, {
-                  id: data.id || `temp-${Date.now()}`,
-                  text: data.text,
-                  userId: data.userId,
-                  userName: data.username,
-                  userInitials: data.userInitials,
-                  timestamp: data.timestamp
-                }];
+                const updatedMessages = [...prevMessages, newMessage];
+                console.log("Updated messages array:", updatedMessages);
+                return updatedMessages;
               }
               return prevMessages;
             });
+            
+            // Try an additional direct state update technique as fallback
+            setTimeout(() => {
+              setMessages(prev => {
+                const exists = prev.some(m => m.id === newMessage.id);
+                console.log("Retry adding message, exists?", exists);
+                return exists ? prev : [...prev, newMessage];
+              });
+            }, 500);
           }
         } catch (error) {
           console.error("Error parsing WebSocket message:", error);
