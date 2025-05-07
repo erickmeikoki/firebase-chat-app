@@ -20,21 +20,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   wss.on('connection', (ws) => {
     console.log('Client connected');
-    let clientId: string | null = null;
+    let clientId = '';
     
     ws.on('message', (message) => {
       try {
         const data = JSON.parse(message.toString());
         
         // Handle initial connection with user info
-        if (data.type === 'register') {
+        if (data.type === 'register' && data.userId) {
           clientId = data.userId;
           clients.set(clientId, { 
             id: data.userId, 
-            username: data.username, 
+            username: data.username || 'Anonymous', 
             ws 
           });
-          console.log(`Client registered: ${data.username} (${data.userId})`);
+          console.log(`Client registered: ${data.username || 'Anonymous'} (${data.userId})`);
         }
         
         // Handle new messages
@@ -84,6 +84,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error fetching messages:', error);
       res.status(500).json({ error: 'Failed to fetch messages' });
     }
+  });
+  
+  // Health check endpoint
+  app.get('/api/health', (req, res) => {
+    res.json({ 
+      status: 'ok',
+      connections: clients.size,
+      wsServerRunning: wss.clients.size >= 0
+    });
   });
   
   return httpServer;

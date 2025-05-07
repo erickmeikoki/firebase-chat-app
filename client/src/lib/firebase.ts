@@ -1,7 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, push, serverTimestamp, onValue, off, get, query, orderByChild, limitToLast } from "firebase/database";
-import { getAnalytics } from "firebase/analytics";
 import { v4 as uuidv4 } from "uuid";
 
 // Your web app's Firebase configuration
@@ -11,7 +10,7 @@ const firebaseConfig = {
   authDomain: "chat-app-ec4d7.firebaseapp.com",
   databaseURL: "https://chat-app-ec4d7-default-rtdb.firebaseio.com",
   projectId: "chat-app-ec4d7",
-  storageBucket: "chat-app-ec4d7.firebasestorage.app",
+  storageBucket: "chat-app-ec4d7.appspot.com",
   messagingSenderId: "155026489650",
   appId: "1:155026489650:web:057edf4077394316f4972b",
   measurementId: "G-2SVMEEW9LG"
@@ -20,8 +19,6 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
-// Initialize Analytics only in browser environment
-const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 
 // Generate a user ID if one doesn't exist in localStorage
 const getUserId = () => {
