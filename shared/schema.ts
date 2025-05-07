@@ -19,22 +19,21 @@ export type User = typeof users.$inferSelect;
 
 // Messages table for storing message history
 export const messages = pgTable("messages", {
-  id: serial("id").primaryKey(),
+  id: text("id").primaryKey(), // Using string IDs for better compatibility with WebSockets
   text: text("text").notNull(),
-  userId: integer("user_id").references(() => users.id).notNull(),
+  userId: text("user_id").notNull(), // Using string user IDs from client
+  userName: text("user_name").notNull(),
+  userInitials: text("user_initials").notNull(),
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
-export const messagesRelations = relations(messages, ({ one }) => ({
-  user: one(users, {
-    fields: [messages.userId],
-    references: [users.id],
-  }),
-}));
-
-export const insertMessageSchema = createInsertSchema(messages).pick({
-  text: true,
-  userId: true,
+export const insertMessageSchema = createInsertSchema(messages, {
+  id: z.string(),
+  text: z.string(),
+  userId: z.string(),
+  userName: z.string(),
+  userInitials: z.string(),
+  timestamp: z.date(),
 });
 
 export type InsertMessage = z.infer<typeof insertMessageSchema>;

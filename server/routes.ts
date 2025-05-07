@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { db } from "./storage";
+import * as schema from "../shared/schema";
 
 type Client = {
   id: string;
@@ -22,7 +23,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('Client connected');
     let clientId = '';
     
-    ws.on('message', (message) => {
+    ws.on('message', async (message) => {
       try {
         const data = JSON.parse(message.toString());
         
@@ -39,8 +40,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Handle new messages
         if (data.type === 'message') {
+          // Generate a unique ID for the message
+          const messageId = `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+          
           // We create a message object with the received data
           const messageObject = {
+            id: messageId,
             type: 'message',
             userId: data.userId,
             username: data.username || 'Anonymous',
@@ -48,6 +53,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             text: data.text,
             timestamp: Date.now()
           };
+          
+          // Store the message in the database
+          try {
+            await db.insert(schema.messages).values({
+              id: messageId,
+              text: data.text,
+              userId: data.userId,
+              userName: data.username || 'Anonymous',
+              userInitials: data.userInitials || 'A',
+              timestamp: new Date(messageObject.timestamp)
+            });
+            console.log(`Message saved to database: ${messageId}`);
+          } catch (dbError) {
+            console.error('Error saving message to database:', dbError);
+            // Continue with broadcast even if database save fails
+          }
           
           // Broadcast to all connected clients
           clients.forEach((client) => {
