@@ -135,6 +135,16 @@ export function useChat() {
     async function loadInitialMessages() {
       setIsLoading(true);
       try {
+        // Create a default message if there are none
+        const demoMessage: Message = {
+          id: `demo-${Date.now()}`,
+          text: "Welcome to the chat! Click the Test WebSocket button to see a test message or type a message and hit send.",
+          userId: "system",
+          userName: "System",
+          userInitials: "SYS",
+          timestamp: Date.now()
+        };
+        
         // Get messages from Firebase
         console.log("Loading messages from Firebase...");
         const firebaseMessages = await getMessages();
@@ -179,16 +189,21 @@ export function useChat() {
               return a.timestamp - b.timestamp;
             });
             
-            console.log("Combined sorted messages:", sortedMessages);
-            setMessages(sortedMessages);
+            // Add a system welcome message if there are no messages
+            const finalMessages = sortedMessages.length === 0 ? [demoMessage] : sortedMessages;
+            
+            console.log("Combined sorted messages:", finalMessages);
+            setMessages(finalMessages);
           } else {
-            // If server API fails, still show Firebase messages
+            // If server API fails, still show Firebase messages or welcome message
             console.log("Server API request failed, using only Firebase messages");
-            setMessages(firebaseMessages);
+            const finalMessages = firebaseMessages.length === 0 ? [demoMessage] : firebaseMessages;
+            setMessages(finalMessages);
           }
         } catch (serverError) {
           console.error("Error fetching from server API:", serverError);
-          setMessages(firebaseMessages);
+          const finalMessages = firebaseMessages.length === 0 ? [demoMessage] : firebaseMessages;
+          setMessages(finalMessages);
         }
       } catch (error) {
         console.error("Error loading initial messages:", error);
